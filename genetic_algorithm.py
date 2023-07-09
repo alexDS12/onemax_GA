@@ -1,7 +1,7 @@
 from random import randint
 from population import Population
 from individual import Individual
-from typing import Tuple, List, Optional
+from typing import Tuple, List
 
 
 class GA:
@@ -21,7 +21,7 @@ class GA:
         self.num_mutations = int(individual_size * mutation_rate)
         self.population = Population(population_size, individual_size, crossover_rate)
 
-    def run(self) -> Optional[Individual]:
+    def run(self) -> None:
         self.population.initialize_population()
 
         generation = 0
