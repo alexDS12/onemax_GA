@@ -1,9 +1,23 @@
 from random import random, uniform, randint
 from individual import Individual
-from typing import Tuple, Optional
 
 
 class Population:
+    """A population is composed by a set of distinct individuals.
+    In other perspective, a population is a set of solutions to the problem
+    within the search space.
+
+    Attributes
+    ----------
+    population_size: int
+        Number of individuals that will compose the population.
+    individual_size : int
+        Amount of genes in the individual chromosome.
+    crossover_rate : float
+        Rate of which two individuals will generate two offsprings.
+
+    """
+
     def __init__(
         self,
         population_size: int,
@@ -21,11 +35,12 @@ class Population:
         ]
 
     def compute_fitnesses(self) -> None:
+        """Compute fitnesses of current population in bulk"""
         for individual in self.individuals:
             individual.compute_fitness()
 
     def sort_individuals(self) -> None:
-        """Rank individuals desc based on their fitness"""
+        """Rank individuals desc based on `fitness`"""
         try:
             self.individuals.sort(key=lambda i: i.fitness, reverse=True)
         except TypeError as e:
@@ -33,7 +48,7 @@ class Population:
 
     def roulette_selection(self) -> Individual:
         """Choose an individual to reproduce. The probability of an
-        individual being chosen is proportional to its fitness.
+        individual being chosen is proportional to `fitness`.
         """
         total_fitnesses = sum([i.fitness for i in self.individuals])
         random_num = uniform(0, total_fitnesses)
@@ -44,7 +59,7 @@ class Population:
             if current_fitness > random_num:
                 return individual
     
-    def crossover_twopoints(self, p1: Individual, p2: Individual) -> Optional[Tuple[Individual]]:
+    def crossover_twopoints(self, p1: Individual, p2: Individual) -> tuple[Individual, Individual] | None:
         """Generate offsprings off `p1` and `p2` on double random points.
         We slice parents' chromosomes and then combine their parts to form new individuals.
         Yet, the crossover is a stochastic process, which means two individuals may decide

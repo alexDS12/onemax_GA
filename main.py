@@ -1,5 +1,5 @@
 from argparse import ArgumentParser, ArgumentTypeError
-from genetic_algorithm import GA
+from genetic_algorithm import GA, CGA
 
 
 def main():
@@ -39,21 +39,27 @@ def main():
     
     parser.add_argument('-elite_size', '--elite_size',
                         type=positive_int,
-                        required=True,
                         help='Number of individuals to progress and form a new generation')
     
     parser.add_argument('-mut_rate', '--mutation_rate',
                         type=restricted_float,
-                        required=True,
                         help='Rate of which an individual will likely have its genes mutated')
     
     parser.add_argument('-cross_rate', '--crossover_rate', 
                         type=restricted_float,
-                        required=True,
                         help='Rate of which individuals will reproduce offsprings')
     
+    parser.add_argument('-alg', '--algorithm',
+                        type=lambda arg: arg.upper(),
+                        choices=['GA', 'CGA'],
+                        required=True,
+                        help='Possible algorithms: GA, CGA (case-insensitive)')
+    
     args = parser.parse_args()
-    GA(**vars(args)).run()
+    if args.algorithm == 'GA' and \
+       any(arg is None for arg in (args.elite_size, args.mutation_rate, args.crossover_rate)):
+        parser.error('"GA" algorithm requires --elite_size, --mutation_rate and --crossover_rate')
+    eval(f'{args.algorithm}(**vars(args))').run()
 
 
 if __name__ == '__main__':
