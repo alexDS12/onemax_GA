@@ -50,7 +50,7 @@ class Population:
         """Choose an individual to reproduce. The probability of an
         individual being chosen is proportional to `fitness`.
         """
-        total_fitnesses = sum([i.fitness for i in self.individuals])
+        total_fitnesses = sum(i.fitness for i in self.individuals)
         random_num = uniform(0, total_fitnesses)
         
         current_fitness = 0
@@ -68,7 +68,9 @@ class Population:
         if random() > self.crossover_rate:
             return None
         
-        idx1, idx2 = (randint(0, self.individual_size) for _ in range(2))
+        idx1 = randint(0, self.individual_size)
+        idx2 = randint(0, self.individual_size)
+        
         if idx1 > idx2:
             idx1, idx2 = idx2, idx1
 

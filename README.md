@@ -8,6 +8,10 @@ Formally the goal is to maximize the number of ones by evolving a population of 
 
 The problem aims to evolve the population throughout generations while applying genetic operators to find an individual $x = \\{x_1, x_2, ..., x_N\\}$ that maximizes the equation $$F(x) = \sum_{i=1}^{N} x_i$$ s.t. the ideal individual is represented by $x \in \\{1\\}^N$.
 
+## Prerequisites
+
+1. Python v3.11
+
 ## Usage
 
 Run the following command to show help on the available arguments:

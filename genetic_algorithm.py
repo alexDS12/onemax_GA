@@ -14,7 +14,7 @@ class GA:
 
     Attributes
     ----------
-    max_generations : int | float('Inf')
+    max_generations : float
         Number of maximum iterations for a GA instance.
         Convergence is the stopping criterion when "Inf".
     individual_size : int
@@ -32,7 +32,7 @@ class GA:
 
     def __init__(
         self, 
-        max_generations: int,
+        max_generations: float,
         individual_size: int,
         population_size: int,
         elite_size: int,
@@ -123,7 +123,7 @@ class CGA:
 
     Attributes
     ----------
-    max_generations : int | float('Inf')
+    max_generations : float
         Number of maximum iterations for a GA instance.
         Convergence is the stopping criterion when "Inf".
     individual_size : int
@@ -137,7 +137,7 @@ class CGA:
 
     def __init__(
         self,
-        max_generations: int,
+        max_generations: float,
         individual_size: int,
         population_size: int,
         **kwargs
