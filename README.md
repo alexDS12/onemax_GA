@@ -23,17 +23,17 @@ python main.py -h
 For instance:
 
 ```python
-python main.py -max_gen 20000 -ind_size 300 -pop_size 100 -elite_size 5 -mut_rate 0.01 -cross_rate 0.85 -alg ga
+python main.py -max_gen 20000 -ind_size 300 -pop_size 100 -elite_size 5 -mut_rate 0.01 -cross_rate 0.85 -alg sga
 ```
 
 ```
 max_generations   = int (optional) - Max generations for the algorithm, defaults to infinite if not set.
 individual_size   = int - Size of the individual's chromosome.
 population_size   = int - Size of the population of individuals.
-elite_size        = int - Number of individuals that are considered the fittest to start a new generation (Only required for "GA" algorithm).
-mutation_rate     = float - Rate on which individuals will change one or more gene(s) (Only required for "GA" algorithm).
-cross_rate        = float - Rate for stochastic decision if two individuals should reproduce (Only required for "GA" algorithm).
-algorithm         = str {CGA, GA} - Algorithm to run an instance of the Genetic Algorithm.
+elite_size        = int - Number of individuals that are considered the fittest to start a new generation (Only required for "SGA" algorithm).
+mutation_rate     = float - Rate on which individuals will change one or more gene(s) (Only required for "SGA" algorithm).
+cross_rate        = float - Rate for stochastic decision if two individuals should reproduce (Only required for "SGA" algorithm).
+algorithm         = str {CGA, SGA} - Algorithm to run an instance of the Genetic Algorithm.
 ```
 
 ## License
