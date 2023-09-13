@@ -1,5 +1,18 @@
 from argparse import ArgumentParser, ArgumentTypeError
-from genetic_algorithm import GA, CGA
+from genetic_algorithm import SGA, CGA
+from functools import wraps
+from time import perf_counter
+
+
+def timeit(function):
+    @wraps(function)
+    def wrapper(*args, **kwargs):
+        time_start = perf_counter()
+        result = function(*args, **kwargs)
+        time_end = perf_counter()
+        print(f'{function.__qualname__} took {time_end-time_start:.4f} sec')
+        return result
+    return wrapper
 
 
 def main():
@@ -51,15 +64,19 @@ def main():
     
     parser.add_argument('-alg', '--algorithm',
                         type=lambda arg: arg.upper(),
-                        choices=['GA', 'CGA'],
+                        choices=['SGA', 'CGA'],
                         required=True,
-                        help='Possible algorithms: GA, CGA (case-insensitive)')
+                        help='Possible algorithms: SGA, CGA (case-insensitive)')
+    
+    parser.add_argument('-v', '--verbose',
+                        action='store_true', 
+                        help='Verbose output')
     
     args = parser.parse_args()
-    if args.algorithm == 'GA' and \
+    if args.algorithm == 'SGA' and \
        any(arg is None for arg in (args.elite_size, args.mutation_rate, args.crossover_rate)):
-        parser.error('"GA" algorithm requires --elite_size, --mutation_rate and --crossover_rate')
-    eval(f'{args.algorithm}(**vars(args))').run()
+        parser.error('"SGA" algorithm requires --elite_size, --mutation_rate and --crossover_rate')
+    timeit(eval(f'{args.algorithm}(**vars(args))').run)()
 
 
 if __name__ == '__main__':

@@ -41,6 +41,12 @@ class Individual:
         """Onemax's goal is to maximize the number of '1' genes"""
         self.fitness = sum(self.chromosome)
 
+    def mutate(self, num_mutations: int) -> None:
+        """Mutate N random genes by flipping current gene value"""
+        for _ in range(num_mutations):
+            idx = randint(0, self.size-1)
+            self.chromosome[idx] = 1 - self.chromosome[idx] 
+
     def __gt__(self, other_individual: Individual) -> bool:
         """Compare this individual with another individual"""
         if not isinstance(other_individual, Individual):
