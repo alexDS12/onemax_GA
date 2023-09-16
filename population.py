@@ -28,6 +28,13 @@ class Population:
         self.individual_size = individual_size
         self.crossover_rate = crossover_rate
 
+    @property
+    def avg_fitness(self) -> float:
+        try:
+            return sum([i.fitness for i in self.individuals]) / self.population_size
+        except TypeError:
+            raise Exception('Make sure to compute fitnesses before taking the fitness average')
+
     def initialize_population(self) -> None:
         """The initial population is randomized based on `individual_size`"""
         self.individuals = [

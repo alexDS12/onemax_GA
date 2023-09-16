@@ -26,6 +26,8 @@ class SGA:
         Number of mutations a single chromosome will be submitted to.
     population : Population
         Representation of a population of individuals.
+    verbose : boolean
+        Verbose output for each generation.
 
     """
 
@@ -70,7 +72,7 @@ class SGA:
 
             generation += 1
             self.population.individuals = self.get_new_generation()
-        print(f'Best solution: {fittest}. Generation #{generation}')
+        print(f'Best solution: {fittest.fitness}. Generation #{generation}')
 
     def select_parents(self) -> tuple[Individual, Individual]:
         """Apply roulette selection to current population to determine
@@ -128,6 +130,8 @@ class CGA:
         Size of the population of individuals.
     probability : int
         Probability distribution over the set of solutions.
+    verbose : boolean
+        Verbose output for each generation.
 
     """
 
@@ -169,7 +173,7 @@ class CGA:
 
             self.update_probability(winner.chromosome, loser.chromosome)
             generation += 1
-        print(f'Best solution: {fittest}. Generation #{generation}')
+        print(f'Best solution: {fittest.fitness}. Generation #{generation}')
 
     def generate(self) -> Individual:
         """The probability of genes being either 0 or 1 is dictated by the probability vector"""
@@ -182,18 +186,116 @@ class CGA:
         return (ind1, ind2) if ind1 > ind2 else (ind2, ind1)
     
     def update_probability(self, winner_chr: list[int], loser_chr: list[int]) -> None:
-        """Update the probability vector based on the winner. Round resulting PV due to float comp"""
+        """Update the probability vector based on the winner"""
         for i in range(self.individual_size):
             if winner_chr[i] != loser_chr[i]:
                 if winner_chr[i] == 1:
                     self.probability[i] += 1 / self.population_size
                 else:
                     self.probability[i] -= 1 / self.population_size
-        self.probability = [round(p, 2) for p in self.probability]
 
     def has_converged(self) -> bool:
-        """Check convergence based on the probability vector"""
+        """Check convergence based on the probability vector.
+        Due to probabilities being floats, they could be either very close to 0 or to 1, here we
+        take in account that such values are either 0 or 1 for simplicity.
+        """
         for p in self.probability:
+            if CGA.is_close(0, p) or CGA.is_close(1, p):
+                return True
             if p > 0 and p < 1:
                 return False
         return True
+    
+    @staticmethod
+    def is_close(val1: float, val2: float) -> bool:
+        """Check whether or not two floating-point values are very close"""
+        return abs(val1 - val2) <= 1e-9
+
+
+class PBIL:
+    """The population-based incremental learning (PBIL) is not only a GA but also an EDA which
+    preserves a probability vector (PV) based on statistics of a certain number of individuals generated. 
+    The first PBIL version uses simple competitive learning mechanisms along with GA operators.
+    Whereas the second version got rid of genetics completely.
+
+    The first PBIL algorithm was proposed by Baluja, S. TECH REPORT NO. CMU-CS-94-163
+    And republished without genetics in collaboration with Caruana, R.
+    DOI 10.1016/B978-1-55860-377-6.50014-1
+
+    Attributes
+    ----------
+    max_generations : float
+        Number of maximum iterations for a GA instance.
+        Convergence is the stopping criterion when "Inf".
+    individual_size : int
+        Amount of genes in the individual chromosome.
+    population_size : int
+        Size of the population of individuals.
+    num_individuals : int
+        Number of N best individuals to update the PV.
+    learning_rate : float
+        Specifies how large the steps will be taken when updating the PV.
+    probability : int
+        Probability distribution over the set of solutions.
+    verbose : boolean
+        Verbose output for each generation.
+        
+    """
+
+    def __init__(
+        self,
+        max_generations: float,
+        individual_size: int,
+        population_size: int,
+        num_individuals: int,
+        learning_rate: float,
+        verbose: bool,
+        **kwargs
+    ):
+        self.max_generations = max_generations
+        self.individual_size = individual_size
+        self.population_size = population_size
+        self.num_individuals = num_individuals
+        self.learning_rate = learning_rate
+        self.probability = [0.5] * individual_size
+        self.verbose = verbose
+
+    def run(self) -> None:
+        """Run an instance of the population-based incremental learning algorithm"""
+        generation = 0
+        fittest = None
+        individuals: list[Individual] = []
+        while generation < self.max_generations:
+            for _ in range(self.population_size):
+                individual = self.generate()
+                individual.compute_fitness()
+                individuals.append(individual)
+
+            individuals.sort(key=lambda i: i.fitness, reverse=True)
+            fittest = individuals[0]
+
+            if self.verbose:
+                print(f'Gen: #{generation} - best: {fittest.fitness}')
+
+            if fittest.fitness == self.individual_size:
+                if self.verbose:
+                    print(f'Early stopping, best solution found in generation #{generation}')
+                break
+
+            self.update_probability(individuals[:self.num_individuals])
+            individuals.clear()
+            generation += 1
+        print(f'Best solution: {fittest.fitness}. Generation #{generation}')
+
+    def generate(self) -> Individual:
+        """The probability of genes being either 0 or 1 is dictated by the probability vector"""
+        ind = Individual.from_size(self.individual_size, discrete=False)
+        ind.chromosome = list(map(lambda x: int(x[0] < x[1]), zip(ind.chromosome, self.probability)))
+        return ind
+    
+    def update_probability(self, individuals: list[Individual]) -> None:
+        """Update the probability vector based on best `num_individuals` from current population"""
+        for ind in individuals:
+            for i in range(self.individual_size):
+                self.probability[i] = (self.probability[i] * (1 - self.learning_rate) 
+                                       + ind.chromosome[i] * self.learning_rate)

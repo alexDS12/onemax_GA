@@ -1,5 +1,5 @@
 from argparse import ArgumentParser, ArgumentTypeError
-from genetic_algorithm import SGA, CGA
+from genetic_algorithm import SGA, CGA, PBIL
 from functools import wraps
 from time import perf_counter
 
@@ -62,11 +62,19 @@ def main():
                         type=restricted_float,
                         help='Rate of which individuals will reproduce offsprings')
     
+    parser.add_argument('-n_ind', '--num_individuals',
+                        type=positive_int,
+                        help='Number of best individuals to update the probability vector')
+    
+    parser.add_argument('-lr', '--learning_rate',
+                        type=restricted_float,
+                        help='Rate of which how large steps to take when updating probability vector')
+    
     parser.add_argument('-alg', '--algorithm',
                         type=lambda arg: arg.upper(),
-                        choices=['SGA', 'CGA'],
+                        choices=['SGA', 'CGA', 'PBIL'],
                         required=True,
-                        help='Possible algorithms: SGA, CGA (case-insensitive)')
+                        help='Possible algorithms: SGA, CGA, PBIL (case-insensitive)')
     
     parser.add_argument('-v', '--verbose',
                         action='store_true', 
@@ -76,6 +84,10 @@ def main():
     if args.algorithm == 'SGA' and \
        any(arg is None for arg in (args.elite_size, args.mutation_rate, args.crossover_rate)):
         parser.error('"SGA" algorithm requires --elite_size, --mutation_rate and --crossover_rate')
+    elif args.algorithm == 'PBIL' and \
+        (args.num_individuals is None or args.learning_rate is None):
+        parser.error('"PBIL algorithm requires --num_individuals, --learning_rate')
+    
     timeit(eval(f'{args.algorithm}(**vars(args))').run)()
 
 

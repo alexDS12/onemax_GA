@@ -23,7 +23,15 @@ python main.py -h
 For instance:
 
 ```python
-python main.py -max_gen 20000 -ind_size 300 -pop_size 100 -elite_size 5 -mut_rate 0.01 -cross_rate 0.85 -alg sga
+python main.py -max_gen 20000 -ind_size 300 -pop_size 100 -elite_size 5 -mut_rate 0.01 -cross_rate 0.85 -alg SGA
+```
+
+```python
+python main.py -ind_size 300 -pop_size 200 -v -alg CGA
+```
+
+```python
+python main.py -ind_size 50 -pop_size 200 -num_individuals 2 -learning_rate 0.005 -v -alg PBIL
 ```
 
 ```
@@ -31,9 +39,12 @@ max_generations   = int (optional) - Max generations for the algorithm, defaults
 individual_size   = int - Size of the individual's chromosome.
 population_size   = int - Size of the population of individuals.
 elite_size        = int - Number of individuals that are considered the fittest to start a new generation (Only required for "SGA" algorithm).
-mutation_rate     = float - Rate on which individuals will change one or more gene(s) (Only required for "SGA" algorithm).
-cross_rate        = float - Rate for stochastic decision if two individuals should reproduce (Only required for "SGA" algorithm).
-algorithm         = str {CGA, SGA} - Algorithm to run an instance of the Genetic Algorithm.
+mutation_rate     = float - Rate of which individuals will change one or more gene(s) (Only required for "SGA" algorithm).
+crossover_rate    = float - Rate for stochastic decision if two individuals should reproduce (Only required for "SGA" algorithm).
+num_individuals   = int - Number of best individuals to update probability vector (Only required for "PBIL" algorithm).
+learning_rate     = float - Rate of how large steps shpuld be taken when updating the probability vector (Only required for "PBIL" algorithm).
+algorithm         = str {SGA, CGA, PBIL} - Algorithm to run an instance of the Genetic Algorithm.
+verbose           = boolean - Verbose display of GA under execution, default to false.
 ```
 
 ## License
