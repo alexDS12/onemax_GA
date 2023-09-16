@@ -1,5 +1,6 @@
+import matplotlib.pyplot as plt
 from argparse import ArgumentParser, ArgumentTypeError
-from genetic_algorithm import SGA, CGA, PBIL
+from genetic_algorithm import SGA, CGA, PBIL, Stats
 from functools import wraps
 from time import perf_counter
 
@@ -9,8 +10,8 @@ def timeit(function):
     def wrapper(*args, **kwargs):
         time_start = perf_counter()
         result = function(*args, **kwargs)
-        time_end = perf_counter()
-        print(f'{function.__qualname__} took {time_end-time_start:.4f} sec')
+        elapsed_time = perf_counter() - time_start
+        print(f'{function.__qualname__} took {elapsed_time:.4f} sec')
         return result
     return wrapper
 
@@ -88,7 +89,28 @@ def main():
         (args.num_individuals is None or args.learning_rate is None):
         parser.error('"PBIL algorithm requires --num_individuals, --learning_rate')
     
-    timeit(eval(f'{args.algorithm}(**vars(args))').run)()
+    stats = timeit(eval(f'{args.algorithm}(**vars(args))').run)()
+    plot(stats, args.algorithm, args.individual_size)
+
+
+def plot(stats: Stats, algorithm: str, individual_size: int) -> None:
+    best, avg, runtimes = list(zip(*stats))
+    
+    fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(8, 4.8))
+    fig.suptitle(f'{algorithm} Fitnesses and Runtime per generation')
+    fig.supxlabel('Generation', y=0.06)
+
+    ax1.plot(best, 'b-', markersize=6, label='BEST')
+    ax1.plot(avg, 'r-', markersize=6, label='AVG')
+    ax1.axhline(y=individual_size, color='black', linestyle='--', label='GLOBAL OPT')
+    ax1.set_ylabel('Fitness')
+
+    ax2.plot(runtimes, 'g-', markersize=6, label='RUNTIME')
+    ax2.set_ylabel('Runtime (s)')
+
+    fig.legend(loc='lower center', ncols=4, bbox_to_anchor=(0.5, -0.01))
+    fig.tight_layout()
+    plt.show()
 
 
 if __name__ == '__main__':

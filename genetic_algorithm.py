@@ -1,5 +1,13 @@
 from population import Population
 from individual import Individual
+from time import perf_counter
+from typing import TypeAlias
+
+
+FitnessBest: TypeAlias = float
+FitnessAvg: TypeAlias = float
+Runtime: TypeAlias = float
+Stats: TypeAlias = list[tuple[FitnessBest, FitnessAvg, Runtime]]
 
 
 class SGA:
@@ -50,13 +58,16 @@ class SGA:
         self.population = Population(population_size, individual_size, crossover_rate)
         self.verbose = verbose
 
-    def run(self) -> None:
+    def run(self) -> Stats:
         """Run an instance of the simple Genetic Algorithm"""
         self.population.initialize_population()
 
         generation = 0
         fittest = None
+        stats: Stats = []
+
         while generation < self.max_generations:
+            time_start = perf_counter()
             self.population.compute_fitnesses()
             self.population.sort_individuals()
 
@@ -70,9 +81,14 @@ class SGA:
                     print(f'Early stopping, best solution found in generation #{generation}')
                 break
 
+            new_population = self.get_new_generation()
+            time_end = perf_counter()
+            stats.append((fittest.fitness, self.population.avg_fitness, time_end-time_start))
+            
+            self.population.individuals = new_population
             generation += 1
-            self.population.individuals = self.get_new_generation()
-        print(f'Best solution: {fittest.fitness}. Generation #{generation}')
+        print(f'Best fitness: {fittest.fitness}, generation #{generation}')
+        return stats
 
     def select_parents(self) -> tuple[Individual, Individual]:
         """Apply roulette selection to current population to determine
@@ -149,11 +165,14 @@ class CGA:
         self.probability = [0.5] * individual_size
         self.verbose = verbose
 
-    def run(self) -> None:
+    def run(self) -> Stats:
         """Run an instance of the compact Genetic Algorithm"""
         generation = 0
         fittest = None
+        stats: Stats = []
+
         while generation < self.max_generations:
+            time_start = perf_counter()
             ind1 = self.generate()
             ind1.compute_fitness()
 
@@ -170,10 +189,14 @@ class CGA:
                 if self.verbose:
                     print(f'Probability vector has converged in generation #{generation}')
                 break
-
+            
             self.update_probability(winner.chromosome, loser.chromosome)
+            time_end = perf_counter()
+            stats.append((fittest.fitness, self.get_avg_fitness(winner, loser), time_end-time_start))
+            
             generation += 1
-        print(f'Best solution: {fittest.fitness}. Generation #{generation}')
+        print(f'Best fitness: {fittest.fitness}, generation #{generation}')
+        return stats
 
     def generate(self) -> Individual:
         """The probability of genes being either 0 or 1 is dictated by the probability vector"""
@@ -195,21 +218,17 @@ class CGA:
                     self.probability[i] -= 1 / self.population_size
 
     def has_converged(self) -> bool:
-        """Check convergence based on the probability vector.
-        Due to probabilities being floats, they could be either very close to 0 or to 1, here we
-        take in account that such values are either 0 or 1 for simplicity.
-        """
+        """Check convergence based on the probability vector"""
         for p in self.probability:
-            if CGA.is_close(0, p) or CGA.is_close(1, p):
-                return True
             if p > 0 and p < 1:
                 return False
         return True
     
-    @staticmethod
-    def is_close(val1: float, val2: float) -> bool:
-        """Check whether or not two floating-point values are very close"""
-        return abs(val1 - val2) <= 1e-9
+    def get_avg_fitness(self, winner: Individual, loser: Individual) -> float:
+        try:
+            return (winner.fitness + loser.fitness) / 2
+        except TypeError:
+            raise Exception('Make sure to compute fitnesses before taking the fitness average')
 
 
 class PBIL:
@@ -260,12 +279,15 @@ class PBIL:
         self.probability = [0.5] * individual_size
         self.verbose = verbose
 
-    def run(self) -> None:
+    def run(self) -> Stats:
         """Run an instance of the population-based incremental learning algorithm"""
         generation = 0
         fittest = None
         individuals: list[Individual] = []
+        stats: Stats = []
+
         while generation < self.max_generations:
+            time_start = perf_counter()
             for _ in range(self.population_size):
                 individual = self.generate()
                 individual.compute_fitness()
@@ -283,9 +305,13 @@ class PBIL:
                 break
 
             self.update_probability(individuals[:self.num_individuals])
+            time_end = perf_counter()
+            stats.append((fittest.fitness, self.get_avg_fitness(individuals), time_end-time_start))
+
             individuals.clear()
             generation += 1
-        print(f'Best solution: {fittest.fitness}. Generation #{generation}')
+        print(f'Best fitness: {fittest.fitness}, generation #{generation}')
+        return stats
 
     def generate(self) -> Individual:
         """The probability of genes being either 0 or 1 is dictated by the probability vector"""
@@ -299,3 +325,9 @@ class PBIL:
             for i in range(self.individual_size):
                 self.probability[i] = (self.probability[i] * (1 - self.learning_rate) 
                                        + ind.chromosome[i] * self.learning_rate)
+
+    def get_avg_fitness(self, individuals: list[Individual]) -> float:
+        try:
+            return sum([i.fitness for i in individuals]) / self.population_size
+        except TypeError:
+            raise Exception('Make sure to compute fitnesses before taking the fitness average')
