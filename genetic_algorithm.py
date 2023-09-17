@@ -75,15 +75,15 @@ class SGA:
 
             if self.verbose:
                 print(f'Gen: #{generation} - best: {fittest.fitness}')
-            
-            if fittest.fitness == self.individual_size:
-                if self.verbose:
-                    print(f'Early stopping, best solution found in generation #{generation}')
-                break
 
             new_population = self.get_new_generation()
             time_end = perf_counter()
             stats.append((fittest.fitness, self.population.avg_fitness, time_end-time_start))
+
+            if fittest.fitness == self.individual_size:
+                if self.verbose:
+                    print(f'Early stopping, best solution found in generation #{generation}')
+                break
             
             self.population.individuals = new_population
             generation += 1
@@ -184,15 +184,17 @@ class CGA:
 
             if self.verbose:
                 print(f'Gen: #{generation} - best: {fittest.fitness}')
+            
+            self.update_probability(winner.chromosome, loser.chromosome)
+            has_converged = self.has_converged()
+            time_end = perf_counter()
 
-            if self.has_converged():
+            stats.append((fittest.fitness, self.get_avg_fitness(winner, loser), time_end-time_start))
+
+            if has_converged:
                 if self.verbose:
                     print(f'Probability vector has converged in generation #{generation}')
                 break
-            
-            self.update_probability(winner.chromosome, loser.chromosome)
-            time_end = perf_counter()
-            stats.append((fittest.fitness, self.get_avg_fitness(winner, loser), time_end-time_start))
             
             generation += 1
         print(f'Best fitness: {fittest.fitness}, generation #{generation}')
@@ -299,14 +301,14 @@ class PBIL:
             if self.verbose:
                 print(f'Gen: #{generation} - best: {fittest.fitness}')
 
+            self.update_probability(individuals[:self.num_individuals])
+            time_end = perf_counter()
+            stats.append((fittest.fitness, self.get_avg_fitness(individuals), time_end-time_start))
+
             if fittest.fitness == self.individual_size:
                 if self.verbose:
                     print(f'Early stopping, best solution found in generation #{generation}')
                 break
-
-            self.update_probability(individuals[:self.num_individuals])
-            time_end = perf_counter()
-            stats.append((fittest.fitness, self.get_avg_fitness(individuals), time_end-time_start))
 
             individuals.clear()
             generation += 1
