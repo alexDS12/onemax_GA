@@ -13,20 +13,19 @@ class Population:
         Number of individuals that will compose the population.
     individual_size : int
         Amount of genes in the individual chromosome.
-    crossover_rate : float
-        Rate of which two individuals will generate two offsprings.
 
     """
 
     def __init__(
         self,
         population_size: int,
-        individual_size: int,
-        crossover_rate: float
+        individual_size: int
     ):
         self.population_size = population_size
         self.individual_size = individual_size
-        self.crossover_rate = crossover_rate
+        self.individuals = [
+            Individual.from_size(self.individual_size) for _ in range(self.population_size)
+        ]
 
     @property
     def avg_fitness(self) -> float:
@@ -34,12 +33,10 @@ class Population:
             return sum([i.fitness for i in self.individuals]) / self.population_size
         except TypeError:
             raise Exception('Make sure to compute fitnesses before taking the fitness average')
-
-    def initialize_population(self) -> None:
-        """The initial population is randomized based on `individual_size`"""
-        self.individuals = [
-            Individual.from_size(self.individual_size) for _ in range(self.population_size)
-        ]
+        
+    @property
+    def best_individual(self) -> Individual:
+        return self.individuals[0]
 
     def compute_fitnesses(self) -> None:
         """Compute fitnesses of current population in bulk"""
@@ -53,28 +50,25 @@ class Population:
         except TypeError as e:
             raise Exception('Make sure to compute fitnesses before sorting the population')
 
-    def roulette_selection(self) -> Individual:
+    def roulette_selection(self) -> int:
         """Choose an individual to reproduce. The probability of an
         individual being chosen is proportional to `fitness`.
+        Better to work with indexes rather than individuals so we can easily compare 
+        if the same individual was chosen as parent1 and parent2 during reproduction.
         """
         total_fitnesses = sum(i.fitness for i in self.individuals)
         random_num = uniform(0, total_fitnesses)
         
         current_fitness = 0
-        for individual in self.individuals:
+        for idx, individual in enumerate(self.individuals):
             current_fitness += individual.fitness
             if current_fitness > random_num:
-                return individual
+                return idx
     
-    def crossover_twopoints(self, p1: Individual, p2: Individual) -> tuple[Individual, Individual] | None:
+    def crossover_twopoints(self, p1: Individual, p2: Individual) -> tuple[Individual, Individual]:
         """Generate offsprings off `p1` and `p2` on double random points.
         We slice parents' chromosomes and then combine their parts to form new individuals.
-        Yet, the crossover is a stochastic process, which means two individuals may decide
-        not to reproduce (i.e. random value is higher than crossover rate).
         """
-        if random() > self.crossover_rate:
-            return None
-        
         idx1 = randint(0, self.individual_size)
         idx2 = randint(0, self.individual_size)
         
@@ -94,3 +88,7 @@ class Population:
             self.individual_size
         )
         return offspring_1, offspring_2
+
+    def __getitem__(self, index: int) -> Individual:
+        """Get individual at given index"""
+        return self.individuals[index]

@@ -1,3 +1,4 @@
+from random import random
 from population import Population
 from individual import Individual
 from time import perf_counter
@@ -30,8 +31,12 @@ class SGA:
         Size of the population of individuals.
     elite_size : int
         Size of N best individuals that form a new population.
+    crossover_rate : float
+        Rate of which two individuals will generate two offsprings.
     num_mutations : int
         Number of mutations a single chromosome will be submitted to.
+    num_individuals_to_create : int
+        Number of new individuals to create for a new generation.
     population : Population
         Representation of a population of individuals.
     verbose : boolean
@@ -54,14 +59,14 @@ class SGA:
         self.individual_size = individual_size
         self.population_size = population_size
         self.elite_size = elite_size
+        self.crossover_rate = crossover_rate
         self.num_mutations = int(individual_size * mutation_rate)
-        self.population = Population(population_size, individual_size, crossover_rate)
+        self.num_individuals_to_create = population_size - elite_size
+        self.population = Population(population_size, individual_size)
         self.verbose = verbose
 
     def run(self) -> Stats:
         """Run an instance of the simple Genetic Algorithm"""
-        self.population.initialize_population()
-
         generation = 0
         fittest = None
         stats: Stats = []
@@ -71,12 +76,12 @@ class SGA:
             self.population.compute_fitnesses()
             self.population.sort_individuals()
 
-            fittest = self.population.individuals[0]
+            fittest = self.population.best_individual
 
             if self.verbose:
                 print(f'Gen: #{generation} - best: {fittest.fitness}')
 
-            new_population = self.get_new_generation()
+            new_population = self.create_new_generation()
             time_end = perf_counter()
             stats.append((fittest.fitness, self.population.avg_fitness, time_end-time_start))
 
@@ -90,18 +95,7 @@ class SGA:
         print(f'Best fitness: {fittest.fitness}, generation #{generation}')
         return stats
 
-    def select_parents(self) -> tuple[Individual, Individual]:
-        """Apply roulette selection to current population to determine
-        which individuals will mate.
-        Avoid selecting the same individual as it can't reproduce with itself.
-        """
-        parent_1 = parent_2 = None
-        while parent_1 == parent_2:
-            parent_1 = self.population.roulette_selection()
-            parent_2 = self.population.roulette_selection()
-        return parent_1, parent_2
-
-    def get_new_generation(self) -> list[Individual]:
+    def create_new_generation(self) -> list[Individual]:
         """Create population for a new generation.
         The new population will be composed by X elite individuals
         and the remaining is generated through application of genetic
@@ -111,13 +105,18 @@ class SGA:
         """
         new_generation = []
 
-        while len(new_generation) < (self.population_size - self.elite_size):
-            parents = self.select_parents()
-            children = self.population.crossover_twopoints(*parents)
-            if children is None:
+        while len(new_generation) < self.num_individuals_to_create:
+            idx_parent_1 = self.population.roulette_selection()
+            idx_parent_2 = self.population.roulette_selection()
+
+            if idx_parent_1 == idx_parent_2 or random() > self.crossover_rate:
                 continue
+
+            parent_1 = self.population[idx_parent_1]
+            parent_2 = self.population[idx_parent_2]
+
+            child_1, child_2 = self.population.crossover_twopoints(parent_1, parent_2)
             
-            child_1, child_2 = children
             child_1.mutate(self.num_mutations)
             child_2.mutate(self.num_mutations)
             new_generation.append(child_1)
